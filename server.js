@@ -31,8 +31,12 @@ app.use(bodyParser.json());
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header(
+        'Access-Control-Allow-Methods',
+        'GET,PUT,POST,DELETE,PATCH,OPTIONS',
+    );
+    res.header(
         'Access-Control-Allow-Headers',
-        'Origin, X-Requested-With, Content-Type, Accept',
+        'Origin, X-Requested-With, Content-Type, Accept, Authorization',
     );
     next();
 });
@@ -55,6 +59,17 @@ app.post('/messages', (req, res) => {
     res.json(req.body);
 });
 
+app.get('/users/me', checkAuthenticated, (req, res) => {
+    res.json(users[req.user]);
+});
+
+app.post('/users/me', (req, res) => {
+    var user = users[req.user];
+    user.firstName = req.body.firstName;
+    user.lastName = req.body.lastName;
+    res.json(user);
+});
+
 //auth routes
 var auth = express.Router();
 app.use('/auth', auth);
@@ -67,19 +82,41 @@ auth.post('/register', (req, res) => {
 });
 
 auth.post('/login', (req, res) => {
-    var user = users.find(user => user.email === req.body.email);
+    var user = users.find(user => user.email == req.body.email);
     if (!user) {
-        res.json({ success: false, message: 'email or password is incorrect' });
+        sendAuthError(res);
     }
-    if ((user.password = req.body.password)) {
+    if (user.password == req.body.password) {
         sendToken(user, res);
     } else {
-        res.json({ success: false, message: 'email or password is incorrect' });
+        sendAuthError(res);
     }
 });
 
 function sendToken(user, res) {
     var token = jwt.sign(user.id, '123');
     res.json({ firstName: user.firstName, token });
+}
+
+function sendAuthError(res) {
+    return res.json({
+        success: false,
+        message: 'email or password is incorrect',
+    });
+}
+
+function checkAuthenticated(req, res, next) {
+    if (!req.header('authorization'))
+        return res.status(401).send({ message: 'Unauthorized request' });
+
+    var token = req.header('authorization').split(' ')[1];
+
+    var payload = jwt.decode(token, '123');
+
+    if (!payload) return res.status(401).send({ message: 'missing payload' });
+
+    req.user = payload;
+
+    next();
 }
 app.listen(63145);

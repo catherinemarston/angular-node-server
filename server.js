@@ -11,18 +11,33 @@ admin.initializeApp({
     databaseURL: 'https://messages-972c8.firebaseio.com',
 });
 
-var messages = [
-    { text: 'hello', sender: 'Tim' },
-    { text: 'hey whats up', sender: 'Sean' },
-    { text: 'hi', sender: 'Greg' },
+var messages = [{
+        text: 'hello',
+        sender: 'Tim'
+    },
+    {
+        text: 'hey whats up',
+        sender: 'Sean'
+    },
+    {
+        text: 'hi',
+        sender: 'Greg'
+    },
 ];
 
-var users = [
-    {
+var users = [{
         firstName: 'catherine',
+        lastName: 'mars',
         email: 'cathymarstonang@gmail.com',
         password: 'test',
         id: 0,
+    },
+    {
+        firstName: 'catherine',
+        lastName: 'marston',
+        email: 'cathymarstonang@gmail.com',
+        password: 'test',
+        id: 1,
     },
 ];
 
@@ -60,11 +75,14 @@ app.post('/messages', (req, res) => {
 });
 
 app.get('/users/me', checkAuthenticated, (req, res) => {
+    console.log(req.user);
     res.json(users[req.user]);
 });
 
 app.post('/users/me', (req, res) => {
-    var user = users[req.user];
+    var user = users.find(user => user.email == req.body.email);
+    // console.log(user);
+    // console.log(req.body);
     user.firstName = req.body.firstName;
     user.lastName = req.body.lastName;
     res.json(user);
@@ -95,7 +113,10 @@ auth.post('/login', (req, res) => {
 
 function sendToken(user, res) {
     var token = jwt.sign(user.id, '123');
-    res.json({ firstName: user.firstName, token });
+    res.json({
+        firstName: user.firstName,
+        token
+    });
 }
 
 function sendAuthError(res) {
@@ -107,13 +128,17 @@ function sendAuthError(res) {
 
 function checkAuthenticated(req, res, next) {
     if (!req.header('authorization'))
-        return res.status(401).send({ message: 'Unauthorized request' });
+        return res.status(401).send({
+            message: 'Unauthorized request'
+        });
 
     var token = req.header('authorization').split(' ')[1];
 
     var payload = jwt.decode(token, '123');
 
-    if (!payload) return res.status(401).send({ message: 'missing payload' });
+    if (!payload) return res.status(401).send({
+        message: 'missing payload'
+    });
 
     req.user = payload;
 

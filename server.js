@@ -69,7 +69,6 @@ app.get('/messages/:user', (req, res) => {
 });
 
 app.post('/messages', (req, res) => {
-    console.log(req.body);
     messages.push(req.body);
     res.json(req.body);
 });
@@ -81,8 +80,6 @@ app.get('/users/me', checkAuthenticated, (req, res) => {
 
 app.post('/users/me', (req, res) => {
     var user = users.find(user => user.email == req.body.email);
-    // console.log(user);
-    // console.log(req.body);
     user.firstName = req.body.firstName;
     user.lastName = req.body.lastName;
     res.json(user);
@@ -145,3 +142,4 @@ function checkAuthenticated(req, res, next) {
     next();
 }
 app.listen(63145);
+console.log('listening on port 63145');
